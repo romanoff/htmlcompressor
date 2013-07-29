@@ -9,6 +9,7 @@ type HtmlCompressor struct {
 	RemoveComments         bool
 	SimpleDoctype          bool
 	RemoveScriptAttributes bool
+	RemoveIntertagSpaces   bool
 }
 
 func Init() *HtmlCompressor {
@@ -26,6 +27,9 @@ func (self *HtmlCompressor) Compress(html []byte) []byte {
 	html = self.processHtml(html)
 	html = self.simpleDoctype(html)
 	html = self.removeScriptAttributes(html)
+	html = self.removeIntertagSpaces(html)
+	// html = self.removeMultiSpaces(html)
+	// html = self.removeSpacesInsideTags(html)
 	return html
 }
 
@@ -59,6 +63,21 @@ func (self *HtmlCompressor) removeScriptAttributes(html []byte) []byte {
 	if self.RemoveScriptAttributes {
 		html = jsTypeAttrPattern.ReplaceAll(html, []byte("$1$4"))
 		html = jsLangAttrPattern.ReplaceAll(html, []byte("$1$4"))
+	}
+	return html
+}
+
+var intertagPatternTagTag *regexp.Regexp = regexp.MustCompile(`(?is)>\s+<`)
+var intertagPatternTagCustom *regexp.Regexp = regexp.MustCompile(`>\s+%%%~`)
+var intertagPatternCustomTag *regexp.Regexp = regexp.MustCompile(`~%%%\s+<`)
+var intertagPatternCustomCustom *regexp.Regexp = regexp.MustCompile(`~%%%\s+%%%~`)
+
+func (self *HtmlCompressor) removeIntertagSpaces(html []byte) []byte {
+	if self.RemoveIntertagSpaces {
+		html = intertagPatternTagTag.ReplaceAll(html, []byte("><"))
+		html = intertagPatternTagCustom.ReplaceAll(html, []byte(">%%%~"))
+		html = intertagPatternCustomTag.ReplaceAll(html, []byte("~%%%<"))
+		html = intertagPatternCustomCustom.ReplaceAll(html, []byte("~%%%%%%~"))
 	}
 	return html
 }

@@ -47,3 +47,9 @@ func TestRemoveScriptAttributes(t *testing.T) {
 	compressor.RemoveScriptAttributes = true
 	// testFromFile(t, "testRemoveScriptAttributes", compressor)
 }
+
+func TestRemoveIntertagSpaces(t *testing.T) {
+	compressor := Init()
+	compressor.RemoveIntertagSpaces = true
+	testFromFile(t, "testRemoveIntertagSpaces", compressor)
+}
