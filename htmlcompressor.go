@@ -22,6 +22,18 @@ func Init() *HtmlCompressor {
 	return compressor
 }
 
+func InitAll() *HtmlCompressor {
+	compressor := &HtmlCompressor{
+		Enabled:           true,
+		RemoveComments:    true,
+		SimpleDoctype: true,
+		RemoveScriptAttributes: true,
+		RemoveIntertagSpaces: true,
+		RemoveMultiSpaces: true,
+	}
+	return compressor
+}
+
 func (self *HtmlCompressor) Compress(html []byte) []byte {
 	if !self.Enabled || html == nil || len(html) == 0 {
 		return html
