@@ -1,38 +1,17 @@
 package htmlcompressor
 
+import (
+	"regexp"
+)
+
 type HtmlCompressor struct {
 	Options map[string]bool
-}
-
-type Blocks struct {
-	preBlocks         [][]byte
-	taBlocks          [][]byte
-	scriptBlocks      [][]byte
-	styleBlocks       [][]byte
-	eventBlocks       [][]byte
-	condCommentBlocks [][]byte
-	skipBlocks        [][]byte
-	lineBreakBlocks   [][]byte
-	userBlocks        [][]byte
-}
-
-func InitBlocks() *Blocks {
-	return &Blocks{
-		preBlocks:         make([][]byte, 0),
-		taBlocks:          make([][]byte, 0),
-		scriptBlocks:      make([][]byte, 0),
-		styleBlocks:       make([][]byte, 0),
-		eventBlocks:       make([][]byte, 0),
-		condCommentBlocks: make([][]byte, 0),
-		skipBlocks:        make([][]byte, 0),
-		lineBreakBlocks:   make([][]byte, 0),
-		userBlocks:        make([][]byte, 0),
-	}
 }
 
 func Init() *HtmlCompressor {
 	DefaultOptions := make(map[string]bool)
 	DefaultOptions["enabled"] = true
+	DefaultOptions["remove_comments"] = true
 	return &HtmlCompressor{Options: DefaultOptions}
 }
 
@@ -40,11 +19,20 @@ func (self *HtmlCompressor) Compress(html []byte) []byte {
 	if !self.Options["enabled"] || html == nil || len(html) == 0 {
 		return html
 	}
-	blocks := InitBlocks()
-	html = self.preserveBlocks(html, blocks)
+	html = self.processHtml(html)
 	return []byte{}
 }
 
-func (self *HtmlCompressor) preserveBlocks(html []byte, blocks *Blocks) []byte {
+func (self *HtmlCompressor) processHtml(html []byte) []byte {
+	html = self.removeComments(html)
+	return html
+}
+
+var commentPattern *regexp.Regexp = regexp.MustCompile(`(?is)<!---->|<!--[^\\[].*?-->`)
+
+func (self *HtmlCompressor) removeComments(html []byte) []byte {
+	if self.Options["remove_comments"] {
+		html = commentPattern.ReplaceAll(html, []byte{})
+	}
 	return html
 }
