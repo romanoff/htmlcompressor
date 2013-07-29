@@ -53,3 +53,9 @@ func TestRemoveIntertagSpaces(t *testing.T) {
 	compressor.RemoveIntertagSpaces = true
 	testFromFile(t, "testRemoveIntertagSpaces", compressor)
 }
+
+func TestRemoveMultiSpaces(t *testing.T) {
+	compressor := Init()
+	compressor.RemoveMultiSpaces = true
+	testFromFile(t, "testRemoveMultiSpaces", compressor)
+}

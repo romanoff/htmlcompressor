@@ -10,12 +10,14 @@ type HtmlCompressor struct {
 	SimpleDoctype          bool
 	RemoveScriptAttributes bool
 	RemoveIntertagSpaces   bool
+	RemoveMultiSpaces      bool
 }
 
 func Init() *HtmlCompressor {
 	compressor := &HtmlCompressor{
-		Enabled:        true,
-		RemoveComments: true,
+		Enabled:           true,
+		RemoveComments:    true,
+		RemoveMultiSpaces: true,
 	}
 	return compressor
 }
@@ -28,7 +30,7 @@ func (self *HtmlCompressor) Compress(html []byte) []byte {
 	html = self.simpleDoctype(html)
 	html = self.removeScriptAttributes(html)
 	html = self.removeIntertagSpaces(html)
-	// html = self.removeMultiSpaces(html)
+	html = self.removeMultiSpaces(html)
 	// html = self.removeSpacesInsideTags(html)
 	return html
 }
@@ -68,9 +70,9 @@ func (self *HtmlCompressor) removeScriptAttributes(html []byte) []byte {
 }
 
 var intertagPatternTagTag *regexp.Regexp = regexp.MustCompile(`(?is)>\s+<`)
-var intertagPatternTagCustom *regexp.Regexp = regexp.MustCompile(`>\s+%%%~`)
-var intertagPatternCustomTag *regexp.Regexp = regexp.MustCompile(`~%%%\s+<`)
-var intertagPatternCustomCustom *regexp.Regexp = regexp.MustCompile(`~%%%\s+%%%~`)
+var intertagPatternTagCustom *regexp.Regexp = regexp.MustCompile(`(?is)>\s+%%%~`)
+var intertagPatternCustomTag *regexp.Regexp = regexp.MustCompile(`(?is)~%%%\s+<`)
+var intertagPatternCustomCustom *regexp.Regexp = regexp.MustCompile(`(?is)~%%%\s+%%%~`)
 
 func (self *HtmlCompressor) removeIntertagSpaces(html []byte) []byte {
 	if self.RemoveIntertagSpaces {
@@ -78,6 +80,15 @@ func (self *HtmlCompressor) removeIntertagSpaces(html []byte) []byte {
 		html = intertagPatternTagCustom.ReplaceAll(html, []byte(">%%%~"))
 		html = intertagPatternCustomTag.ReplaceAll(html, []byte("~%%%<"))
 		html = intertagPatternCustomCustom.ReplaceAll(html, []byte("~%%%%%%~"))
+	}
+	return html
+}
+
+var multiSpacePattern *regexp.Regexp = regexp.MustCompile(`(?is)\s+`)
+
+func (self *HtmlCompressor) removeMultiSpaces(html []byte) []byte {
+	if self.RemoveMultiSpaces {
+		html = multiSpacePattern.ReplaceAll(html, []byte(" "))
 	}
 	return html
 }
