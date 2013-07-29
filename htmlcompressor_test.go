@@ -45,7 +45,7 @@ func TestSimpleDoctype(t *testing.T) {
 func TestRemoveScriptAttributes(t *testing.T) {
 	compressor := Init()
 	compressor.RemoveScriptAttributes = true
-	// testFromFile(t, "testRemoveScriptAttributes", compressor)
+	testFromFile(t, "testRemoveScriptAttributes", compressor)
 }
 
 func TestRemoveIntertagSpaces(t *testing.T) {
@@ -58,4 +58,9 @@ func TestRemoveMultiSpaces(t *testing.T) {
 	compressor := Init()
 	compressor.RemoveMultiSpaces = true
 	testFromFile(t, "testRemoveMultiSpaces", compressor)
+}
+
+func TestRemoveSpacesInsideTags(t *testing.T) {
+	compressor := Init()
+	testFromFile(t, "testRemoveSpacesInsideTags", compressor)
 }

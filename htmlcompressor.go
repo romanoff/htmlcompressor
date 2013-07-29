@@ -31,7 +31,7 @@ func (self *HtmlCompressor) Compress(html []byte) []byte {
 	html = self.removeScriptAttributes(html)
 	html = self.removeIntertagSpaces(html)
 	html = self.removeMultiSpaces(html)
-	// html = self.removeSpacesInsideTags(html)
+	html = self.removeSpacesInsideTags(html)
 	return html
 }
 
@@ -61,6 +61,7 @@ func (self *HtmlCompressor) simpleDoctype(html []byte) []byte {
 var jsTypeAttrPattern *regexp.Regexp = regexp.MustCompile(`(?is)(<script[^>]*)type\s*=\s*([\"']*)(?:text|application)\/javascript([\"']*)([^>]*>)`)
 var jsLangAttrPattern *regexp.Regexp = regexp.MustCompile(`(?is)(<script[^>]*)language\s*=\s*([\"']*)javascript([\"']*)([^>]*>)`)
 
+//Replaced \2 with [\"'] (as closing tag). This way check of proper closing quote is abandoned
 func (self *HtmlCompressor) removeScriptAttributes(html []byte) []byte {
 	if self.RemoveScriptAttributes {
 		html = jsTypeAttrPattern.ReplaceAll(html, []byte("$1$4"))
@@ -90,5 +91,16 @@ func (self *HtmlCompressor) removeMultiSpaces(html []byte) []byte {
 	if self.RemoveMultiSpaces {
 		html = multiSpacePattern.ReplaceAll(html, []byte(" "))
 	}
+	return html
+}
+
+//var tagPropertyPattern *regexp.Regexp = regexp.MustCompile(`(?i)(\s\w+)\s*=\s*(?=[^<]*?>)`)
+//Cannot be used as go regexp doesn't have ?=
+var tagPropertyPattern *regexp.Regexp = regexp.MustCompile(`(?i)(\s\w+)\s*=\s*`)
+var tagEndSpacePattern *regexp.Regexp = regexp.MustCompile(`(?is)(<(?:[^>]+?))(?:\s+?)(/?>)`)
+
+func (self *HtmlCompressor) removeSpacesInsideTags(html []byte) []byte {
+	html = tagPropertyPattern.ReplaceAll(html, []byte("$1="))
+	html = tagEndSpacePattern.ReplaceAll(html, []byte("$1$2"))
 	return html
 }
