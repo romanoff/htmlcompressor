@@ -5,22 +5,26 @@ import (
 )
 
 type HtmlCompressor struct {
-	Options map[string]bool
+	Enabled        bool
+	RemoveComments bool
+	SimpleDoctype  bool
 }
 
 func Init() *HtmlCompressor {
-	DefaultOptions := make(map[string]bool)
-	DefaultOptions["enabled"] = true
-	DefaultOptions["remove_comments"] = true
-	return &HtmlCompressor{Options: DefaultOptions}
+	compressor := &HtmlCompressor{
+		Enabled:        true,
+		RemoveComments: true,
+	}
+	return compressor
 }
 
 func (self *HtmlCompressor) Compress(html []byte) []byte {
-	if !self.Options["enabled"] || html == nil || len(html) == 0 {
+	if !self.Enabled || html == nil || len(html) == 0 {
 		return html
 	}
 	html = self.processHtml(html)
-	return []byte{}
+	html = self.simpleDoctype(html)
+	return html
 }
 
 func (self *HtmlCompressor) processHtml(html []byte) []byte {
@@ -31,8 +35,17 @@ func (self *HtmlCompressor) processHtml(html []byte) []byte {
 var commentPattern *regexp.Regexp = regexp.MustCompile(`(?is)<!---->|<!--[^\\[].*?-->`)
 
 func (self *HtmlCompressor) removeComments(html []byte) []byte {
-	if self.Options["remove_comments"] {
+	if self.RemoveComments {
 		html = commentPattern.ReplaceAll(html, []byte{})
+	}
+	return html
+}
+
+var doctypePattern *regexp.Regexp = regexp.MustCompile(`(?is)<!DOCTYPE[^>]*>`)
+
+func (self *HtmlCompressor) simpleDoctype(html []byte) []byte {
+	if self.SimpleDoctype {
+		html = doctypePattern.ReplaceAll(html, []byte("<!DOCTYPE html>"))
 	}
 	return html
 }

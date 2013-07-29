@@ -1,6 +1,10 @@
 package htmlcompressor
 
-import "testing"
+import (
+	"io/ioutil"
+	"strings"
+	"testing"
+)
 
 func TestCompress(t *testing.T) {
 	compressor := Init()
@@ -10,25 +14,30 @@ func TestCompress(t *testing.T) {
 	}
 }
 
-func TestRemoveCommnets(t *testing.T) {
-	compressor := Init()
-	html := []byte(`
-<!---->
-<!-- asdfasdf asdfsda -->
-<div>
-<!-- Some comment -->
-asdf
-</div>
-`)
-	expected := `
-
-
-<div>
-
-asdf
-</div>
-`
-	if expected != string(compressor.removeComments(html)) {
-		t.Errorf("Expected html with stripped comments:\n%v\n,but got:\n%v\n", expected, string(compressor.removeComments(html)))
+func testFromFile(t *testing.T, name string, compressor *HtmlCompressor) {
+	source, err := ioutil.ReadFile("test_resources/" + name + ".html")
+	if err != nil {
+		t.Errorf("File not found: %v", "test_resources/"+name+".html")
 	}
+	expected, err := ioutil.ReadFile("test_resources/" + name + "Result.html")
+	if err != nil {
+		t.Errorf("File not found: %v", "test_resources/"+name+"Result.html")
+	}
+	expectedString := strings.TrimSpace(string(expected))
+	result := strings.TrimSpace(string(compressor.Compress(source)))
+	if result != expectedString {
+		t.Errorf("Expected:\n%v\n, but got:\n%v\n", expectedString, result)
+	}
+}
+
+func TestRemoveComments(t *testing.T) {
+	compressor := Init()
+	compressor.RemoveComments = true
+	testFromFile(t, "testRemoveComments", compressor)
+}
+
+func TestSimpleDoctype(t *testing.T) {
+	compressor := Init()
+	compressor.SimpleDoctype = true
+	testFromFile(t, "testSimpleDoctype", compressor)
 }
