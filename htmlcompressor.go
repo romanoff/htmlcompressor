@@ -5,9 +5,10 @@ import (
 )
 
 type HtmlCompressor struct {
-	Enabled        bool
-	RemoveComments bool
-	SimpleDoctype  bool
+	Enabled                bool
+	RemoveComments         bool
+	SimpleDoctype          bool
+	RemoveScriptAttributes bool
 }
 
 func Init() *HtmlCompressor {
@@ -24,6 +25,7 @@ func (self *HtmlCompressor) Compress(html []byte) []byte {
 	}
 	html = self.processHtml(html)
 	html = self.simpleDoctype(html)
+	html = self.removeScriptAttributes(html)
 	return html
 }
 
@@ -46,6 +48,17 @@ var doctypePattern *regexp.Regexp = regexp.MustCompile(`(?is)<!DOCTYPE[^>]*>`)
 func (self *HtmlCompressor) simpleDoctype(html []byte) []byte {
 	if self.SimpleDoctype {
 		html = doctypePattern.ReplaceAll(html, []byte("<!DOCTYPE html>"))
+	}
+	return html
+}
+
+var jsTypeAttrPattern *regexp.Regexp = regexp.MustCompile(`(?is)(<script[^>]*)type\s*=\s*([\"']*)(?:text|application)\/javascript([\"']*)([^>]*>)`)
+var jsLangAttrPattern *regexp.Regexp = regexp.MustCompile(`(?is)(<script[^>]*)language\s*=\s*([\"']*)javascript([\"']*)([^>]*>)`)
+
+func (self *HtmlCompressor) removeScriptAttributes(html []byte) []byte {
+	if self.RemoveScriptAttributes {
+		html = jsTypeAttrPattern.ReplaceAll(html, []byte("$1$4"))
+		html = jsLangAttrPattern.ReplaceAll(html, []byte("$1$4"))
 	}
 	return html
 }

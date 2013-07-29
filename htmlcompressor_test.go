@@ -41,3 +41,9 @@ func TestSimpleDoctype(t *testing.T) {
 	compressor.SimpleDoctype = true
 	testFromFile(t, "testSimpleDoctype", compressor)
 }
+
+func TestRemoveScriptAttributes(t *testing.T) {
+	compressor := Init()
+	compressor.RemoveScriptAttributes = true
+	// testFromFile(t, "testRemoveScriptAttributes", compressor)
+}
