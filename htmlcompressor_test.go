@@ -64,3 +64,8 @@ func TestRemoveSpacesInsideTags(t *testing.T) {
 	compressor := Init()
 	testFromFile(t, "testRemoveSpacesInsideTags", compressor)
 }
+
+func TestPreserveBlocks(t *testing.T) {
+	compressor := Init()
+	testFromFile(t, "testPre", compressor)
+}

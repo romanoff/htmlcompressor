@@ -1,7 +1,9 @@
 package htmlcompressor
 
 import (
+	"bytes"
 	"regexp"
+	"strconv"
 )
 
 type HtmlCompressor struct {
@@ -11,6 +13,7 @@ type HtmlCompressor struct {
 	RemoveScriptAttributes bool
 	RemoveIntertagSpaces   bool
 	RemoveMultiSpaces      bool
+	tempBlocks             map[string][][]byte
 }
 
 func Init() *HtmlCompressor {
@@ -18,18 +21,20 @@ func Init() *HtmlCompressor {
 		Enabled:           true,
 		RemoveComments:    true,
 		RemoveMultiSpaces: true,
+		tempBlocks:        make(map[string][][]byte),
 	}
 	return compressor
 }
 
 func InitAll() *HtmlCompressor {
 	compressor := &HtmlCompressor{
-		Enabled:           true,
-		RemoveComments:    true,
-		SimpleDoctype: true,
+		Enabled:                true,
+		RemoveComments:         true,
+		SimpleDoctype:          true,
 		RemoveScriptAttributes: true,
-		RemoveIntertagSpaces: true,
-		RemoveMultiSpaces: true,
+		RemoveIntertagSpaces:   true,
+		RemoveMultiSpaces:      true,
+		tempBlocks:             make(map[string][][]byte),
 	}
 	return compressor
 }
@@ -38,13 +43,55 @@ func (self *HtmlCompressor) Compress(html []byte) []byte {
 	if !self.Enabled || html == nil || len(html) == 0 {
 		return html
 	}
+	html = self.preserveBlocks(html)
 	html = self.processHtml(html)
 	html = self.simpleDoctype(html)
 	html = self.removeScriptAttributes(html)
 	html = self.removeIntertagSpaces(html)
 	html = self.removeMultiSpaces(html)
 	html = self.removeSpacesInsideTags(html)
+	html = self.restorePreservedBlocks(html)
 	return html
+}
+
+var prePattern *regexp.Regexp = regexp.MustCompile(`(?is)(<pre[^>]*?>)(.*?)(</pre>)`)
+
+func (self *HtmlCompressor) preserveBlocks(html []byte) []byte {
+	tempPreBlock := "%%%~COMPRESS~PRE~{0,number,#}~%%%"
+	matches := prePattern.FindAllSubmatch(html, -1)
+	i := 0
+	for _, match := range matches {
+		content := match[2]
+		if len(content) > 0 {
+			tempBlock := messageFormat(tempPreBlock, i)
+			i++
+			replaceWith := []byte{}
+			replaceWith = append(replaceWith, match[1]...)
+			replaceWith = append(replaceWith, tempBlock...)
+			replaceWith = append(replaceWith, match[3]...)
+			self.tempBlocks[tempPreBlock] = append(self.tempBlocks[tempPreBlock], match[2])
+			html = bytes.Replace(html, match[0], replaceWith, -1)
+		} else {
+			bytes.Replace(html, match[0], []byte{}, -1)
+		}
+	}
+	return html
+}
+
+func (self *HtmlCompressor) restorePreservedBlocks(html []byte) []byte {
+	for blockName, blocks := range self.tempBlocks {
+		for i, block := range blocks {
+			tempBlock := messageFormat(blockName, i)
+			html = bytes.Replace(html, tempBlock, block, -1)
+		}
+	}
+	return html
+}
+
+var messagePattern *regexp.Regexp = regexp.MustCompile(`(.+){0,number,#}(.+)`)
+
+func messageFormat(message string, i int) []byte {
+	return []byte(messagePattern.ReplaceAllString(message, "$1{"+strconv.Itoa(i)+"}$2"))
 }
 
 func (self *HtmlCompressor) processHtml(html []byte) []byte {
